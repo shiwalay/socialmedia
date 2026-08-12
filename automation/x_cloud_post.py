@@ -9,6 +9,7 @@ Env needed: X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_SECRET.
 """
 import csv, os, sys, datetime as dt
 from pathlib import Path
+import requests
 
 IST = dt.timezone(dt.timedelta(hours=5, minutes=30))
 SLOTS = ["08:00", "12:00", "16:00", "20:00"]
