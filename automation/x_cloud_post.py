@@ -70,11 +70,13 @@ def main():
         return
 
     print(f"posting {key} | {row['category']} | {row['title']}")
-    auth = tweepy.OAuth1UserHandler(keys[0], keys[1], keys[2], keys[3])
-    api_v1 = tweepy.API(auth)
-    media_ids = [api_v1.media_upload(str(f)).media_id_string for f in files]
+    print("tweepy version:", tweepy.__version__)
     client = tweepy.Client(consumer_key=keys[0], consumer_secret=keys[1],
                            access_token=keys[2], access_token_secret=keys[3])
+    media_ids = []
+    for f in files:
+        m = client.media_upload(filename=str(f))   # v2 media upload
+        media_ids.append(str(m.media_id))
     resp = client.create_tweet(text=row["caption_x"], media_ids=media_ids)
     print("X ok:", resp.data.get("id"))
 
