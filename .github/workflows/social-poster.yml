@@ -7,7 +7,12 @@ on:
     - cron: "30 6 * * *"
     - cron: "30 10 * * *"
     - cron: "30 14 * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      force_x_test:
+        description: "Force a one-off X test post (any value)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -41,6 +46,7 @@ jobs:
           X_API_SECRET: ${{ secrets.X_API_SECRET }}
           X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
           X_ACCESS_SECRET: ${{ secrets.X_ACCESS_SECRET }}
+          FORCE_SLOT: ${{ github.event.inputs.force_x_test }}
         run: python automation/x_cloud_post.py
 
       - name: Commit posting log

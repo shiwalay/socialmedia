@@ -38,22 +38,30 @@ def main():
     import tweepy
 
     now = dt.datetime.now(IST)
-    slot, gap = current_slot(now)
-    if not slot:
-        print(f"no slot within tolerance (nearest {gap} min away) — exiting")
-        return
-    key = f"{now:%Y-%m-%d}_{slot}"
-    done = LOG.read_text().split() if LOG.exists() else []
-    if key in done:
-        print(key, "already posted — exiting")
-        return
-
+    force = os.environ.get("FORCE_SLOT")
+    if force:
+        slot = force
+    else:
+        slot, gap = current_slot(now)
+        if not slot:
+            print(f"no slot within tolerance (nearest {gap} min away) — exiting")
+            return
     rows = list(csv.DictReader(open(CAL)))
-    row = next((r for r in rows if r["date"] == f"{now:%Y-%m-%d}"
-                and r["time_IST"] == slot), None)
-    if not row:
-        print("no calendar entry for", key, "— exiting")
-        return
+    if force:
+        key = "FORCE_TEST"
+        row = rows[0]
+        print("FORCE test mode: posting first calendar row (not logged)")
+    else:
+        key = f"{now:%Y-%m-%d}_{slot}"
+        done = LOG.read_text().split() if LOG.exists() else []
+        if key in done:
+            print(key, "already posted — exiting")
+            return
+        row = next((r for r in rows if r["date"] == f"{now:%Y-%m-%d}"
+                    and r["time_IST"] == slot), None)
+        if not row:
+            print("no calendar entry for", key, "— exiting")
+            return
 
     rel = row["images_folder"].split("blacklight-all/", 1)[-1]
     files = [REPO / rel / f"slide-{i}.jpg" for i in range(1, 5)]
@@ -70,8 +78,9 @@ def main():
     resp = client.create_tweet(text=row["caption_x"], media_ids=media_ids)
     print("X ok:", resp.data.get("id"))
 
-    with open(LOG, "a") as f:
-        f.write(key + "\n")
+    if not force:
+        with open(LOG, "a") as f:
+            f.write(key + "\n")
 
 
 if __name__ == "__main__":
