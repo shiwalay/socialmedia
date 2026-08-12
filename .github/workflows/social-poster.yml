@@ -41,6 +41,7 @@ jobs:
         run: python automation/ig_cloud_post.py
 
       - name: Post current slot to X
+        continue-on-error: true
         env:
           X_API_KEY: ${{ secrets.X_API_KEY }}
           X_API_SECRET: ${{ secrets.X_API_SECRET }}
