@@ -32,7 +32,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install requests "tweepy>=4.15"
+        run: pip install requests "tweepy>=4.15" requests-oauthlib
 
       - name: Post current slot to Instagram
         env:

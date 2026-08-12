@@ -70,13 +70,22 @@ def main():
         return
 
     print(f"posting {key} | {row['category']} | {row['title']}")
-    print("tweepy version:", tweepy.__version__)
-    client = tweepy.Client(consumer_key=keys[0], consumer_secret=keys[1],
-                           access_token=keys[2], access_token_secret=keys[3])
+    from requests_oauthlib import OAuth1
+    oauth = OAuth1(keys[0], keys[1], keys[2], keys[3])
     media_ids = []
     for f in files:
-        m = client.media_upload(filename=str(f))   # v2 media upload
-        media_ids.append(str(m.media_id))
+        with open(f, "rb") as fh:
+            r = requests.post("https://api.x.com/2/media/upload",
+                              auth=oauth,
+                              data={"media_category": "tweet_image"},
+                              files={"media": fh}, timeout=180)
+        if r.status_code >= 400:
+            print("MEDIA UPLOAD FAILED", r.status_code, "|", r.text[:400])
+            r.raise_for_status()
+        j = r.json()
+        media_ids.append(str(j.get("data", {}).get("id") or j.get("media_id_string") or j.get("id")))
+    client = tweepy.Client(consumer_key=keys[0], consumer_secret=keys[1],
+                           access_token=keys[2], access_token_secret=keys[3])
     resp = client.create_tweet(text=row["caption_x"], media_ids=media_ids)
     print("X ok:", resp.data.get("id"))
 
