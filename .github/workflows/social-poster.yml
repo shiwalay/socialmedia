@@ -1,4 +1,4 @@
-name: instagram-poster
+name: social-poster
 
 on:
   schedule:
@@ -13,7 +13,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: instagram-poster
+  group: social-poster
   cancel-in-progress: false
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install requests
+        run: pip install requests tweepy
 
       - name: Post current slot to Instagram
         env:
@@ -35,11 +35,19 @@ jobs:
           IG_USER_ID: "17841405853168884"
         run: python automation/ig_cloud_post.py
 
+      - name: Post current slot to X
+        env:
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_SECRET: ${{ secrets.X_ACCESS_SECRET }}
+        run: python automation/x_cloud_post.py
+
       - name: Commit posting log
         run: |
           git config user.name "shiwalay-bot"
           git config user.email "shiwalay@gmail.com"
-          git add automation/posted-ig.log
-          git diff --cached --quiet || git commit -m "log: instagram post"
+          git add automation/posted-ig.log automation/posted-x.log
+          git diff --cached --quiet || git commit -m "log: social post"
           git pull --rebase origin main || true
           git push
