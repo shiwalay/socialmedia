@@ -71,6 +71,12 @@ def main():
         return
 
     print(f"posting {key} | {row['category']} | {row['title']}")
+    if force == "TEXTTEST":
+        client = tweepy.Client(consumer_key=keys[0], consumer_secret=keys[1],
+                               access_token=keys[2], access_token_secret=keys[3])
+        resp = client.create_tweet(text="Setting up automation. " + row["caption_x"][:60])
+        print("TEXT-ONLY X ok:", resp.data.get("id"))
+        return
     from requests_oauthlib import OAuth1
     oauth = OAuth1(keys[0], keys[1], keys[2], keys[3])
     media_ids = []
