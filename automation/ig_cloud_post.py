@@ -22,31 +22,29 @@ CAL = HERE / "posting-calendar.csv"
 LOG = HERE / "posted-ig.log"
 
 
-def current_slot(now):
-    best, gap = None, 10**9
+def due_slot(now, done):
+    """Earliest slot today that is already past and not yet posted (catch-up).
+    Robust to GitHub Actions cron delays/skips: a late run still posts the
+    missed slot. One slot per run; frequent cron catches up the rest."""
+    today = f"{now:%Y-%m-%d}"
+    now_min = now.hour * 60 + now.minute
     for s in SLOTS:
         h, m = map(int, s.split(":"))
-        slot_min = h * 60 + m
-        now_min = now.hour * 60 + now.minute
-        d = abs(now_min - slot_min)
-        if d < gap:
-            best, gap = s, d
-    return (best, gap) if gap <= SLOT_TOLERANCE_MIN else (None, gap)
+        if h * 60 + m <= now_min and f"{today}_{s}" not in done:
+            return s
+    return None
 
 
 def main():
     token = os.environ["FB_PAGE_TOKEN"]
     ig_id = os.environ["IG_USER_ID"]
     now = dt.datetime.now(IST)
-    slot, gap = current_slot(now)
+    done = LOG.read_text().split() if LOG.exists() else []
+    slot = due_slot(now, done)
     if not slot:
-        print(f"no slot within tolerance (nearest is {gap} min away) — exiting")
+        print("nothing due / all caught up — exiting")
         return
     key = f"{now:%Y-%m-%d}_{slot}"
-    done = LOG.read_text().split() if LOG.exists() else []
-    if key in done:
-        print(key, "already posted — exiting")
-        return
 
     rows = list(csv.DictReader(open(CAL)))
     row = next((r for r in rows if r["date"] == f"{now:%Y-%m-%d}"
